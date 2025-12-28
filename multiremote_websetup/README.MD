@@ -1,50 +1,158 @@
-# ini hanyalah dokumentasi belajar vagrant saya untuk memperdalam pengetahuan tentang cloud computing dan devops\
+# Dokumentasi Belajar Vagrant (Cloud Computing & DevOps)
 
-### setup step
+Dokumentasi ini berisi langkah-langkah setup lab **Vagrant** dengan satu VM **scriptbox** dan tiga VM **web** (web01, web02, web03). Tujuan lab ini adalah melatih otomasi dan distribusi konfigurasi ke banyak server (konsep dasar DevOps & Cloud).
 
-`$ vagrant up`
-`$ vagrant ssh scriptbox`
-`[vagrant@scriptbox ~] $ sudo -i`
-`[root@scriptbox ~]  $ vim /etc/hosts`
+---
 
-#### tambahkan
+## Topologi Singkat
 
-`web01 192.168.10.13`
-`web02 192.168.10.14`
-`web03 192.168.10.15`
+- **scriptbox** : node kontrol (menjalankan dan mendistribusikan script)
+- **web01** : 192.168.10.13
+- **web02** : 192.168.10.14
+- **web03** : 192.168.10.15
 
-#### VM web01
+---
 
-`[root@web01 ~] $ useradd devops`
-`[root@web01 ~] $ passwd devops`
+## Setup Awal
 
-#### VM web02
+Jalankan dari **host**:
 
-`[root@web02 ~] $ useradd devops`
-`[root@web02 ~] $ passwd devops`
+```bash
+vagrant up
+```
 
-#### VM web03
+Masuk ke VM **scriptbox**:
 
-`[root@web03 ~] $ adduser devops`
-`[root@web03 ~] $ passwd devops`
+```bash
+vagrant ssh scriptbox
+sudo -i
+```
 
-#### VM scriptbox
+Edit file hosts:
 
-`[root@scriptbox ~] $ ssh-keygen`
-`[root@scriptbox ~] $ ssh-copy-id devops@web01`
-`[root@scriptbox ~] $ ssh-copy-id devops@web02`
-`[root@scriptbox ~] $ ssh-copy-id devops@web03`
+```bash
+vim /etc/hosts
+```
 
-`[root@scriptbox ~] $ mkdir /opt/scripts/remote_websetup`
+Tambahkan:
 
-pembuatan script dilakukan di host dengan tujuan mempermudah.\
-sehingga tahapannya setiap ada perubahan file:\
-scriptFile (host) -> upload/copypaste ke VM (scriptbox) -> scriptbox distribusi setup.sh ke VM lainnya
-`[root@scriptbox ~] $ vagrant ssh-config`
-`[root@scriptbox ~] $ scp -F vagrant_ssh_config setup.sh scriptbox:/opt/scripts/remote_websetup`
-`[root@scriptbox ~] $ scp -F vagrant_ssh_config deploy.sh scriptbox:/opt/scripts/remote_websetup`
-`[root@scriptbox ~] $ scp -F vagrant_ssh_config remhosts scriptbox:/opt/scripts/remote_websetup`
+```text
+192.168.10.13 web01
+192.168.10.14 web02
+192.168.10.15 web03
+```
 
-#### jalankan script
+---
 
-`[root@scriptbox ~] $ ./opt/scripts/remote_websetup/deploy.sh`
+## Pembuatan User di VM Web
+
+Lakukan pada masing-masing VM web.
+
+### VM web01
+
+```bash
+useradd devops
+passwd devops
+```
+
+### VM web02
+
+```bash
+useradd devops
+passwd devops
+```
+
+### VM web03
+
+```bash
+useradd devops
+passwd devops
+```
+
+> Catatan: `useradd` dan `adduser` berbeda tergantung distro. Untuk konsistensi, digunakan `useradd`.
+
+---
+
+## Setup SSH Key (Passwordless SSH)
+
+Lakukan di **scriptbox**:
+
+```bash
+ssh-keygen
+```
+
+Salin SSH key ke seluruh VM web:
+
+```bash
+ssh-copy-id devops@web01
+ssh-copy-id devops@web02
+ssh-copy-id devops@web03
+```
+
+---
+
+## Direktori Script
+
+Buat direktori kerja di **scriptbox**:
+
+```bash
+mkdir -p /opt/scripts/remote_websetup
+```
+
+---
+
+## Alur Pengelolaan Script
+
+Pembuatan dan perubahan script dilakukan di **host** agar lebih mudah.
+
+Alur kerja:
+
+```
+script (host)
+   ↓
+copy ke scriptbox
+   ↓
+scriptbox mendistribusikan ke web01/web02/web03
+```
+
+---
+
+## Copy File dari Host ke Scriptbox
+
+Generate konfigurasi SSH Vagrant (di **host**):
+
+```bash
+vagrant ssh-config > vagrant_ssh_config
+```
+
+Copy file ke **scriptbox**:
+
+```bash
+scp -F vagrant_ssh_config setup.sh  scriptbox:/opt/scripts/remote_websetup/
+scp -F vagrant_ssh_config deploy.sh scriptbox:/opt/scripts/remote_websetup/
+scp -F vagrant_ssh_config remhosts  scriptbox:/opt/scripts/remote_websetup/
+```
+
+---
+
+## Menjalankan Script
+
+Masuk ke **scriptbox**, lalu jalankan:
+
+```bash
+cd /opt/scripts/remote_websetup
+chmod +x deploy.sh
+./deploy.sh
+```
+
+---
+
+## Catatan Tambahan
+
+- **scriptbox** berperan seperti _bastion host_ atau _control node_ (mirip Ansible controller).
+- Setup ini mensimulasikan proses deployment terpusat ke banyak server.
+- Cocok sebagai latihan awal sebelum menggunakan tools seperti **Ansible**, **Terraform**, atau **CI/CD pipeline**.
+
+---
+
+✅ Dokumentasi ini ditujukan untuk pembelajaran pribadi dan eksplorasi konsep **Cloud Computing** serta **DevOps** menggunakan Vagrant.
